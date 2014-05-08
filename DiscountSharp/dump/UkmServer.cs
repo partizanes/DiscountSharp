@@ -48,7 +48,7 @@ namespace DiscountSharp.tools
 
         private void determineTheShopStatus()
         {
-            Connector.updateStatus(2, idShop);
+            updateStatus(2, idShop);
 
             int tryCount = 0;
 
@@ -64,7 +64,7 @@ namespace DiscountSharp.tools
                 {
                     Color.WriteLineColor(" Shop [" + idShop + "] Подключиться не удалось.", ConsoleColor.Red);
                     Log.Write(" Shop [" + idShop + "] Подключиться не удалось.Отмена проверки.", "[checkAvailability]");
-                    Connector.updateStatus(4, idShop);
+                    updateStatus(4, idShop);
                     return;
                 }
             }
@@ -166,7 +166,7 @@ namespace DiscountSharp.tools
                         {
                             Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных кард за весь период.Количество записей: " + queryCount, ConsoleColor.Red);
 
-                            Connector.updateStatus(1, idShop, dateTimeDump, dateTimeDump);
+                            updateStatus(1, idShop, dateTimeDump, dateTimeDump);
                             return 1;
                         }
                     }
@@ -175,7 +175,7 @@ namespace DiscountSharp.tools
                         Color.WriteLineColor("Shop [" + idShop + "] Произошло исключение вставки данных дисконтных карт .", ConsoleColor.Red);
                         Log.Write("[" + idShop + "] " + exc.Message, "queryException");
 
-                        Connector.updateStatus(3, idShop);
+                        updateStatus(3, idShop);
                         return 0;
                     }
                 }
@@ -190,7 +190,7 @@ namespace DiscountSharp.tools
             string dateTimeNow = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
             string ukmServerStrConnecting = string.Format("server={0};Port={1};uid={2};pwd={3};database={4};Connect Timeout=15;", ipUkmServer, portUkmServer, "partizanes", "***REMOVED***", dbName);
 
-            Connector.updateStatus(2, idShop);
+            updateStatus(2, idShop);
 
             MySqlDataReader dr = null;
 
@@ -250,14 +250,14 @@ namespace DiscountSharp.tools
                         {
                             Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных карт с времени последней синхронизации" + lastSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Green);
 
-                            Connector.updateStatus(1, idShop, dateTimeNow);
+                            updateStatus(1, idShop, dateTimeNow);
                         }
                     }
                     catch (Exception exc)
                     {
                         Color.WriteLineColor("[" + idShop + "] Произошло исключение вставки данных дисконтных карт .", ConsoleColor.Red);
                         Log.Write("[" + idShop + "] " + exc.Message, "[frequencyDiscountDump]");
-                        Connector.updateStatus(3, idShop);
+                        updateStatus(3, idShop);
                     }
                 }
             }
@@ -282,7 +282,7 @@ namespace DiscountSharp.tools
                         Color.WriteLineColor("Shop [" + idShop + "] удалено временных [ " + queryRow + " ] записей.",ConsoleColor.Yellow);
                         Log.Write("Shop [" + idShop + "] удалено [ " + queryRow + " ] временных записей.", "Delete");
                        
-                        Connector.updateStatus(1, idShop);
+                        updateStatus(1, idShop);
                         return true;
                     }
                 }
@@ -291,7 +291,7 @@ namespace DiscountSharp.tools
                     Color.WriteLineColor("[" + idShop + "] frequencyDiscountClean очистка неудачна.", ConsoleColor.Red);
                     Log.Write("[" + idShop + "] " + exc.Message, "frequencyDiscountClean");
                     
-                    Connector.updateStatus(3, idShop);
+                    updateStatus(3, idShop);
                     return false;
                 }
                 return false;
@@ -360,15 +360,118 @@ namespace DiscountSharp.tools
                         {
                             Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных карт за период " + lastTotalSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Green);
 
-                            Connector.updateStatus(1, idShop, dateTimeNow);
+                            updateStatus(1, idShop, dateTimeNow);
                         }
                     }
                     catch (Exception exc)
                     {
                         Color.WriteLineColor("[" + idShop + "] [discountDumpLastSync] ." + exc.Message, ConsoleColor.Red);
                         Log.Write("[" + idShop + "] " + exc.Message, "queryException");
-                        Connector.updateStatus(3, idShop);
+                        updateStatus(3, idShop);
                     }
+                }
+            }
+        }
+
+        public static string returnStatusText(int status)
+        {
+            switch (status)
+            {
+                case 0:
+                    return status + @" [не активен]";
+                case 1:
+                    return status + @" [разблокирован]";
+                case 2:
+                    return status + @" [в процессе обновления]";
+                case 3:
+                    return status + @" [ошибка]";
+                case 4:
+                    return status + @" [ошибка подключения]";
+                default:
+                    return status + @" [неизвестно]";
+            }
+        }
+
+        public static bool updateStatus(int status, int idShop)
+        {
+            using (MySqlConnection conn = new MySqlConnection(Connector.DiscountStringConnecting))
+            {
+                conn.Open();
+
+                MySqlCommand cmd = new MySqlCommand("UPDATE mag_status SET `status` = @val1 WHERE id = @val2  ", conn);
+                cmd.CommandTimeout = Connector.commandTimeout;
+                cmd.Parameters.AddWithValue("@val1", status);
+                cmd.Parameters.AddWithValue("@val2", idShop);
+                cmd.Prepare();
+
+                int i = cmd.ExecuteNonQuery();
+
+                if (i == 1)
+                {
+                    Color.WriteLineColor("Shop [" + idShop + "] обновлен статус " + UkmServer.returnStatusText(status), ConsoleColor.Yellow);
+                    return true;
+                }
+                else
+                {
+                    Color.WriteLineColor("Shop [" + idShop + "]  Не удалось обновить статус.", ConsoleColor.Red);
+                    return false;
+                }
+            }
+        }
+
+        public static bool updateStatus(int status, int idShop, string lastSync)
+        {
+            using (MySqlConnection conn = new MySqlConnection(Connector.DiscountStringConnecting))
+            {
+                conn.Open();
+
+                MySqlCommand cmd = new MySqlCommand("UPDATE mag_status SET `status` = @val1 , `last_sync` = @val3 WHERE id = @val2  ", conn);
+                cmd.CommandTimeout = Connector.commandTimeout;
+                cmd.Parameters.AddWithValue("@val1", status);
+                cmd.Parameters.AddWithValue("@val2", idShop);
+                cmd.Parameters.AddWithValue("@val3", lastSync);
+                cmd.Prepare();
+
+                int i = cmd.ExecuteNonQuery();
+
+                if (i == 1)
+                {
+                    Color.WriteLineColor("Shop [" + idShop + "] обновлен статус  " + UkmServer.returnStatusText(status) + " и last_sync = " + lastSync, ConsoleColor.Yellow);
+                    return true;
+                }
+                else
+                {
+                    Color.WriteLineColor("Shop [" + idShop + "]  Не удалось обновить статус и last_sync", ConsoleColor.Red);
+                    return false;
+                }
+            }
+        }
+
+        public static bool updateStatus(int status, int idShop, string lastSync, string lastTotalSync)
+        {
+            using (MySqlConnection conn = new MySqlConnection(Connector.DiscountStringConnecting))
+            {
+                conn.Open();
+
+                MySqlCommand cmd = new MySqlCommand("UPDATE mag_status SET `status` = @val1 , `last_Total_Sync` = @val3 , `last_sync` = @val4 WHERE id = @val2  ", conn);
+                cmd.CommandTimeout = Connector.commandTimeout;
+                cmd.Parameters.AddWithValue("@val1", status);
+                cmd.Parameters.AddWithValue("@val2", idShop);
+                cmd.Parameters.AddWithValue("@val3", lastTotalSync);
+                cmd.Parameters.AddWithValue("@val4", lastSync);
+                cmd.Prepare();
+
+                int i = cmd.ExecuteNonQuery();
+
+                if (i == 1)
+                {
+                    Color.WriteLineColor("Shop [" + idShop + "] обновлен статус  " + UkmServer.returnStatusText(status) + " и last_Total_Sync = " + lastTotalSync, ConsoleColor.Yellow);
+                    return true;
+                }
+                else
+                {
+                    Color.WriteLineColor("Shop [" + idShop + "]  Не удалось обновить статус и last_Total_Sync", ConsoleColor.Red);
+                    return false;
                 }
             }
         }
