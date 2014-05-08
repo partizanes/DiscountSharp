@@ -12,7 +12,7 @@ namespace DiscountTest
         public void CreateObjectUkmServer()
         {
             int idShop=41;
-            string ipUkmServer="192.168.51.100";
+            string ipUkmServer="192.168.41.100";
             int portUkmServer=3306;
             string dbName="ukmserver";
             string lastTotalSync = "2014-05-06 23:47:41";

@@ -89,6 +89,8 @@ namespace DiscountSharp.tools
                     Thread.Sleep(10000);
 
                 frequencyDiscountDump();
+
+                //ERROR После использования данного метода необходимо суммировать первичный дамп с дампом полученым данным методом и после чего обновлять lastTotalSync
             }
             else if ((DateTime.Now - DateTime.Parse(lastSync)).TotalHours >= frequencyDailyDump)
                 discountDumpLastSync();
