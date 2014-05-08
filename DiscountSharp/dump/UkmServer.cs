@@ -88,9 +88,10 @@ namespace DiscountSharp.tools
                 while (!frequencyDiscountClean())
                     Thread.Sleep(10000);
 
-                frequencyDiscountDump();
+                //в случае удачного интервального дампа ,запускаем объединение глобального и интервального.
+                if(frequencyDiscountDump())
+                    totalAndFrequencyDiscountDump();
 
-                //ERROR После использования данного метода необходимо суммировать первичный дамп с дампом полученым данным методом и после чего обновлять lastTotalSync
             }
             else if ((DateTime.Now - DateTime.Parse(lastSync)).TotalHours >= frequencyDailyDump)
                 discountDumpLastSync();
@@ -158,6 +159,9 @@ namespace DiscountSharp.tools
                             Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных кард за весь период.Количество записей: " + queryCount, ConsoleColor.Red);
 
                             Connector.updateStatus(1, idShop, dateTimeDump, dateTimeDump);
+                            lastSync = dateTimeDump;                                                 //Обновляя в базе ,объязательно обновлеям и локальные переменные
+                            lastTotalSync = dateTimeDump;
+
                             return 1;
                         }
                     }
@@ -176,7 +180,7 @@ namespace DiscountSharp.tools
         }
 
         //Метод дампа сумм дисконтных карт от даты последнего дампа до текущего момента
-        private void frequencyDiscountDump()
+        private bool frequencyDiscountDump()
         {
             string dateTimeNow = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
             string ukmServerStrConnecting = string.Format("server={0};Port={1};uid={2};pwd={3};database={4};Connect Timeout=15;", ipUkmServer, portUkmServer, "partizanes", "***REMOVED***", dbName);
@@ -212,6 +216,8 @@ namespace DiscountSharp.tools
                 {
                     Color.WriteLineColor("[" + idShop + "] [frequencyDiscountDump] " + exc.Message, ConsoleColor.Red);
                     Log.Write("[" + idShop + "] " + exc.Message, "[frequencyDiscountDump]");
+
+                    return false;
                 }
 
                 using (MySqlConnection connDiscountSystem = new MySqlConnection(Connector.DiscountStringConnecting))
@@ -242,15 +248,24 @@ namespace DiscountSharp.tools
                             Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных карт с времени последней синхронизации" + lastSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Green);
 
                             Connector.updateStatus(1, idShop, dateTimeNow);
+                            lastSync = dateTimeNow;
+
+                            return true;
                         }
+                        else
+                            Color.WriteLineColor("Shop [" + idShop + "] [WARNING] дамп сумм дисконтных карт с времени последней синхронизации" + lastSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Red);
                     }
                     catch (Exception exc)
                     {
                         Color.WriteLineColor("[" + idShop + "] Произошло исключение вставки данных дисконтных карт .", ConsoleColor.Red);
                         Log.Write("[" + idShop + "] " + exc.Message, "[frequencyDiscountDump]");
                         Connector.updateStatus(3, idShop);
+
+                        return false;
                     }
                 }
+
+                return false;
             }
         }
 
@@ -266,16 +281,13 @@ namespace DiscountSharp.tools
                     MySqlCommand cmd = new MySqlCommand(@"DELETE FROM `card_status` WHERE  `date_operation` > '" + lastTotalSync + "' AND `mag_id` = '" + idShop + "';", conn);
 
                     int queryRow = 0;
-
                     queryRow = cmd.ExecuteNonQuery();
 
-                    if (queryRow > 0){
-                        Color.WriteLineColor("Shop [" + idShop + "] удалено временных [ " + queryRow + " ] записей.",ConsoleColor.Yellow);
-                        Log.Write("Shop [" + idShop + "] удалено [ " + queryRow + " ] временных записей.", "Delete");
-                       
-                        Connector.updateStatus(1, idShop);
-                        return true;
-                    }
+                    Color.WriteLineColor("Shop [" + idShop + "] удалено временных [ " + queryRow + " ] записей.",ConsoleColor.Yellow);
+                    Log.Write("Shop [" + idShop + "] удалено [ " + queryRow + " ] временных записей.", "Delete");
+
+                    Connector.updateStatus(1, idShop);
+                    return true;
                 }
                 catch (Exception exc)
                 {
@@ -285,8 +297,16 @@ namespace DiscountSharp.tools
                     Connector.updateStatus(3, idShop);
                     return false;
                 }
-                return false;
             }
+        }
+
+        private void totalAndFrequencyDiscountDump()
+        {
+            String dateTime = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd,HH:mm:ss");
+
+            Connector.CreateCommand("INSERT INTO `card_status` SELECT id_card,SUM(sum_card),'" + idShop + "', '" + dateTime + "' FROM `card_status` WHERE `mag_id` = '" + idShop + "' GROUP BY `id_card`;" +
+                "DELETE from `card_status` where `date_operation` < '" + dateTime + "' AND `mag_id` = '" + idShop + "'; " +
+                "UPDATE `mag_status` SET `last_total_sync` = '" + dateTime + "' , `last_sync` = '" + dateTime + "' WHERE `id` = '" + idShop + "';");
         }
 
         //Метод переодического(ежедневного дампа данных с последней синхронизации)
@@ -352,7 +372,12 @@ namespace DiscountSharp.tools
                             Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных карт за период " + lastTotalSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Green);
 
                             Connector.updateStatus(1, idShop, dateTimeNow);
+
+                            lastSync = dateTimeNow;
                         }
+                        else
+                            Color.WriteLineColor("Shop [" + idShop + "] [WARNING] Дамп сумм дисконтных карт за период " + lastTotalSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Red);
+
                     }
                     catch (Exception exc)
                     {
