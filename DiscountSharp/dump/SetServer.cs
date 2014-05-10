@@ -1,5 +1,6 @@
 ﻿using DiscountSharp.net;
 using DiscountSharp.tools;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -9,7 +10,7 @@ using System.Threading;
 
 namespace DiscountSharp.dump
 {
-    class SetServer
+    public class SetServer
     {
         public int idShop { get; private set; }
         public string ipSetServer { get; private set; }
@@ -33,14 +34,10 @@ namespace DiscountSharp.dump
 
             Color.WriteLineColor("Инициализирован объект: Shop: [" + idShop + "] ip: " + ipSetServer + ":" + portSetServer + " база данных: " + dbName + " дата глобальной синхронизации: "
                 + lastTotalSync + " дата последней синхронизации: " + lastSync, ConsoleColor.Yellow);
-
-            determineTheShopStatus();
         }
 
-        private void determineTheShopStatus()
+        public void determineTheShopStatus()
         {
-            Connector.updateStatus(2, idShop);
-
             int tryCount = 0;
 
             while (!Connector.checkAvailability(ipSetServer))
@@ -62,17 +59,207 @@ namespace DiscountSharp.dump
                 }
             }
 
-            //checkAvailabilityDumpDC();
+            Connector.updateStatus(2, idShop);
+
+            checkAvailabilityDumpDC();
         }
 
-        private static void CreateCommand(string queryString,string connectionString)
+        private void checkAvailabilityDumpDC()
+         {
+             if (lastTotalSync == "0001-01-01,00:00:00")
+             {
+                 Color.WriteLineColor(" Shop " + idShop + " необходим дамп дисконтных карт.", ConsoleColor.Red);
+
+                 totalDiscountDump();
+             }
+             else if ((DateTime.Now - DateTime.Parse(lastTotalSync)).TotalDays >= frequencyDump)
+             {
+                 totalAndFrequencyDiscountDumpAndClean();
+             }
+             else if ((DateTime.Now - DateTime.Parse(lastSync)).TotalHours >= frequencyDailyDump)
+                 discountDumpLastSync();
+         }
+
+        private int totalDiscountDump()
         {
+            string dateTimeDump = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
+            string setServerStrConnecting = string.Format("Server={0},{1};Database={2};User Id={3};Password={4};", ipSetServer, portSetServer, dbName, "partizanes", "***REMOVED***");
+
+            try
+            {
+                using (SqlConnection connSetServer = new SqlConnection(setServerStrConnecting))
+                {
+                    string queryString = @"USE SES;SELECT DiscountCards.BarCode AS CardNumber, SUM(ChequePos.Price * ChequePos.Quant) AS summa 
+                                           FROM ChequePos INNER JOIN ChequeDisc ON ChequePos.Id = ChequeDisc.PosId 
+                                           INNER JOIN ChequeHead ON ChequePos.ChequeId = ChequeHead.Id 
+                                           INNER JOIN DiscountCards ON ChequeDisc.DiscId = DiscountCards.Id 
+                                           GROUP BY DiscountCards.Perc, DiscountCards.BarCode";
+
+                    using (SqlCommand cmd = new SqlCommand(queryString, connSetServer))
+                    {
+                        connSetServer.Open();
+
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            using (MySqlConnection connDiscountSystem = new MySqlConnection(Connector.DiscountStringConnecting))
+                            {
+
+                                connDiscountSystem.Open();
+
+                                MySqlCommand cmdDiscountSystem = new MySqlCommand(@"INSERT INTO `card_status` VALUES ( @val1 , @val2 , '" + idShop + "' , '" + dateTimeDump + "' );", connDiscountSystem);
+
+                                cmdDiscountSystem.Prepare();
+
+                                cmdDiscountSystem.Parameters.AddWithValue("@val1", "");
+                                cmdDiscountSystem.Parameters.AddWithValue("@val2", "");
+
+                                int queryCount = 0;
+
+                                while (dr.Read())
+                                {
+                                    cmdDiscountSystem.Parameters["@val1"].Value = dr.GetValue(0);
+                                    cmdDiscountSystem.Parameters["@val2"].Value = dr.GetValue(1);
+
+                                    if (cmdDiscountSystem.ExecuteNonQuery() > 0)
+                                        queryCount++;
+                                }
+
+                                if (queryCount > 0)
+                                {
+                                    Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных кард за весь период.Количество записей: " + queryCount, ConsoleColor.Red);
+
+                                    Connector.updateStatus(1, idShop, dateTimeDump, dateTimeDump);
+
+                                    lastSync = dateTimeDump;                                                 //Обновляя в базе ,объязательно обновлеям и локальные переменные
+                                    lastTotalSync = dateTimeDump;
+
+                                    return 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                Color.WriteLineColor("Shop [" + idShop + "] [totalDiscountDump] [SET] Исключение во время запроса глобального дампа дисконтных карт .", ConsoleColor.Red);
+                Log.Write("[" + idShop + "] " + exc.Message, "[totalDiscountDump] [SET]");
+
+                Connector.updateStatus(3, idShop);
+                return 0;
+            }
+
+            return 0;
+        }
+
+        // метод передической групировки временных дампов и объединение с глобальными
+        private void totalAndFrequencyDiscountDumpAndClean()
+        {
+            string lastSyncPlusOneSecond = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd,HH:mm:ss");
+            string lastSyncPlusTwoSecond = DateTime.Parse(lastSync).AddSeconds(2).ToString("yyyy-MM-dd,HH:mm:ss");
+
+            string query = "INSERT INTO `card_status` SELECT `id_card`, SUM(`sum_card`),'" + idShop + "','" + lastSyncPlusOneSecond + "' FROM `card_status`" +      // Выборка и вставка (групировка) всех данных с момента
+                " WHERE `date_operation` > (SELECT `last_total_sync` FROM `mag_status` WHERE `id` = '" + idShop + "')" +                                            // последней глобальной синхронизации по магазину .
+                " AND `mag_id` = '" + idShop + "' GROUP BY `id_card`;" +                                                                                            // с датой последней синхронизации + 1 секунда
+                " DELETE FROM `card_status` WHERE `mag_id` = '" + idShop + "' AND `date_operation` >  " +                                                           // Удаление дубликатов записей между 
+                " (SELECT `last_total_sync` FROM `mag_status` WHERE `id` = '" + idShop + "') " +                                                                    // last_total_sync и last_sync
+                " AND `date_operation` <= (SELECT `last_sync` FROM `mag_status` WHERE `id` = '" + idShop + "');" +                                                  // так как они сгрупированы в первом запросе
+                " UPDATE `mag_status` SET `last_sync` = '" + lastSyncPlusOneSecond + "' WHERE `id` = '" + idShop + "';" +                                           // Обновление даты последней синхронизации в mag_status
+                " INSERT INTO `card_status` SELECT `id_card`, SUM(`sum_card`),'" + idShop + "','" + lastSyncPlusTwoSecond +                                         // Выборка и вставка (групировка) данных 
+                "' FROM `card_status` WHERE `mag_id` = '" + idShop + "' GROUP BY `id_card`;" +                                                                      // last_total_sync + все остальное
+                " DELETE FROM `card_status` WHERE `mag_id` = '" + idShop + "' AND `date_operation` < '" + lastSyncPlusTwoSecond + "';" +                            // Удаление дубликатов после групировки по признаку < lastSyncPlusTwoSecond
+                " UPDATE `mag_status` SET `last_sync` = '" + lastSyncPlusTwoSecond + "' , `last_total_sync` = '" + lastSyncPlusTwoSecond +                          // Обновление даты последней синхронизации в mag_status
+                "' WHERE `id` = '" + idShop + "';";
+
+            Connector.CreateCommand(query);
+
+            lastSync = lastSyncPlusTwoSecond;
+            lastTotalSync = lastSyncPlusTwoSecond;
+        }
+
+        // Дамп данных с даты последней синхронизации по текущее время
+        private int discountDumpLastSync()
+        {
+            string dateTimeNow = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
+            string setServerStrConnecting = string.Format("Server={0},{1};Database={2};User Id={3};Password={4};", ipSetServer, portSetServer, dbName, "partizanes", "***REMOVED***");
+
+            try
+            {
+                using (SqlConnection connSetServer = new SqlConnection(setServerStrConnecting))
+                {
+                    string queryString = @"USE SES;SELECT DiscountCards.BarCode AS CardNumber, (Cast(SUM(ChequePos.Price * ChequePos.Quant) AS Integer)) as summa
+                                           FROM ChequePos INNER JOIN ChequeDisc ON ChequePos.Id = ChequeDisc.PosId 
+                                           INNER JOIN ChequeHead ON ChequePos.ChequeId = ChequeHead.Id 
+                                           INNER JOIN DiscountCards ON ChequeDisc.DiscId = DiscountCards.Id 
+                                           WHERE ChequeHead.DateOperation Between '" + lastSync + "' and '" + dateTimeNow + "'GROUP BY DiscountCards.Perc, DiscountCards.BarCode";
+
+                    using (SqlCommand cmd = new SqlCommand(queryString, connSetServer))
+                    {
+                        connSetServer.Open();
+
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            using (MySqlConnection connDiscountSystem = new MySqlConnection(Connector.DiscountStringConnecting))
+                            {
+
+                                connDiscountSystem.Open();
+
+                                MySqlCommand cmdDiscountSystem = new MySqlCommand(@"INSERT INTO `card_status` VALUES ( @val1 , @val2 , '" + idShop + "' , '" + dateTimeNow + "' );", connDiscountSystem);
+
+                                cmdDiscountSystem.Prepare();
+
+                                cmdDiscountSystem.Parameters.AddWithValue("@val1", "");
+                                cmdDiscountSystem.Parameters.AddWithValue("@val2", "");
+
+                                int queryCount = 0;
+
+                                while (dr.Read())
+                                {
+                                    cmdDiscountSystem.Parameters["@val1"].Value = dr.GetValue(0);
+                                    cmdDiscountSystem.Parameters["@val2"].Value = dr.GetValue(1);
+
+                                    if (cmdDiscountSystem.ExecuteNonQuery() > 0)
+                                        queryCount++;
+                                }
+
+                                if (queryCount > 0)
+                                {
+                                    Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных карт за период " + lastTotalSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Green);
+
+                                    Connector.updateStatus(1, idShop, dateTimeNow);
+
+                                    lastSync = dateTimeNow;                                                 //Обновляя в базе ,объязательно обновляем и локальные переменные
+                                    return 1;
+                                }
+                                else { Color.WriteLineColor("Shop [" + idShop + "] [WARNING] Дамп сумм дисконтных карт за период " + lastTotalSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Red); }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                Color.WriteLineColor("Shop [" + idShop + "] [totalDiscountDump] [SET] Исключение во время запроса  дисконтных карт за период " + lastTotalSync + " - " + dateTimeNow, ConsoleColor.Red);
+                Log.Write("[" + idShop + "] " + exc.Message, "[totalDiscountDump] [SET]");
+
+                Connector.updateStatus(3, idShop);
+                return 0;
+            }
+
+            return 0;
+        }
+
+        public static void CreateCommand(string queryString,string connectionString)
+        {
+            connectionString = "Server=192.168.12.100;Database=SES;User Id=partizanes;Password=***REMOVED***;";
+
             using (SqlConnection connection = new SqlConnection(
                        connectionString))
             {
                 SqlCommand command = new SqlCommand(queryString, connection);
                 command.Connection.Open();
-                command.ExecuteNonQuery();
+                int i = command.ExecuteNonQuery();
+                Color.WriteLineColor(i.ToString(), ConsoleColor.Green);
             }
         }
     }

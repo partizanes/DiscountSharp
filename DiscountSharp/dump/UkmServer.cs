@@ -42,14 +42,10 @@ namespace DiscountSharp.tools
 
             Color.WriteLineColor("Инициализирован объект: Shop: [" + idShop + "] ip: " + ipUkmServer + ":" + portUkmServer + " база данных: " + dbName + " дата глобальной синхронизации: "
                 + lastTotalSync + " дата последней синхронизации: " + lastSync, ConsoleColor.Yellow);
-
-            determineTheShopStatus();
         }
 
-        private void determineTheShopStatus()
+        public void determineTheShopStatus()
         {
-            Connector.updateStatus(2, idShop);
-
             int tryCount = 0;
 
             while (!Connector.checkAvailability(ipUkmServer))
@@ -70,13 +66,16 @@ namespace DiscountSharp.tools
                 }
             }
 
+            //Обновляем статус после того как проверили наличие соединения
+            Connector.updateStatus(2, idShop);
+
             checkAvailabilityDumpDC();
         }
 
         //Проверка наличия дампа дисконтных карт
         private void checkAvailabilityDumpDC()
         {
-            if (lastTotalSync == "0000-00-00 00:00:00")
+            if (lastTotalSync == "0001-01-01,00:00:00")
             {
                 Color.WriteLineColor(" Shop " + idShop + " необходим дамп дисконтных карт.", ConsoleColor.Red);
 

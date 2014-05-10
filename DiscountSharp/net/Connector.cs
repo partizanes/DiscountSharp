@@ -13,7 +13,7 @@ namespace DiscountSharp.net
         private static string discountSharpDb = Config.GetParametr("discountBdName");
         public static int commandTimeout = int.Parse(Config.GetParametr("commandTimeout"));
         private static int connectTimeout = int.Parse(Config.GetParametr("connectTimeout"));
-        public static string DiscountStringConnecting = string.Format("server={0};Port={1};uid={2};pwd={3};database={4};Connect Timeout="
+        public static string DiscountStringConnecting = string.Format("server={0};Port={1};uid={2};pwd={3};database={4};Convert Zero Datetime=True;Connect Timeout="
             + connectTimeout + ";", ipDiscountServer, portDiscountServer, "partizanes", "***REMOVED***", discountSharpDb);
 
         public static bool updateStatus(int status,int idShop)
