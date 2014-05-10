@@ -60,6 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="dump\Common.cs" />
     <Compile Include="dump\SetServer.cs" />
     <Compile Include="main\DiscountCard.cs" />
     <Compile Include="main\MagStatus.cs" />

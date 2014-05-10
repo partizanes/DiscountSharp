@@ -1,8 +1,7 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DiscountSharp.dump;
-using MySql.Data.MySqlClient;
+﻿using DiscountSharp.dump;
 using DiscountSharp.net;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MySql.Data.MySqlClient;
 
 namespace DiscountTest
 {

@@ -1,7 +1,6 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using DiscountSharp.net;
 using DiscountSharp.tools;
-using DiscountSharp.net;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MySql.Data.MySqlClient;
 
 namespace DiscountTest
@@ -44,7 +43,7 @@ namespace DiscountTest
             {
                 conn.Open();
 
-                MySqlCommand cmd = new MySqlCommand(@"SELECT * FROM `mag_status` WHERE `id` = '40'", conn);
+                MySqlCommand cmd = new MySqlCommand(@"SELECT * FROM `mag_status` WHERE `id` = '41'", conn);
 
                 cmd.CommandTimeout = Connector.commandTimeout;
 

@@ -1,7 +1,6 @@
-﻿using System;
-using DiscountSharp.tools;
+﻿using DiscountSharp.net;
 using MySql.Data.MySqlClient;
-using DiscountSharp.net;
+using System;
 using System.Threading;
 
 namespace DiscountSharp.main

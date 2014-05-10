@@ -2,10 +2,7 @@
 using DiscountSharp.tools;
 using MySql.Data.MySqlClient;
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace DiscountSharp.dump
@@ -74,7 +71,13 @@ namespace DiscountSharp.dump
              }
              else if ((DateTime.Now - DateTime.Parse(lastTotalSync)).TotalDays >= frequencyDump)
              {
-                 totalAndFrequencyDiscountDumpAndClean();
+                 string lastSyncPlusOneSecond = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss");
+                 string lastSyncPlusTwoSecond = DateTime.Parse(lastSync).AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss");
+
+                 Common.totalAndFrequencyDiscountDumpAndClean(idShop, lastSyncPlusOneSecond, lastSyncPlusTwoSecond);
+
+                 lastSync = lastSyncPlusTwoSecond;
+                 lastTotalSync = lastSyncPlusTwoSecond;
              }
              else if ((DateTime.Now - DateTime.Parse(lastSync)).TotalHours >= frequencyDailyDump)
                  discountDumpLastSync();
@@ -151,31 +154,6 @@ namespace DiscountSharp.dump
             }
 
             return 0;
-        }
-
-        // метод передической групировки временных дампов и объединение с глобальными
-        private void totalAndFrequencyDiscountDumpAndClean()
-        {
-            string lastSyncPlusOneSecond = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss");
-            string lastSyncPlusTwoSecond = DateTime.Parse(lastSync).AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss");
-
-            string query = "INSERT INTO `card_status` SELECT `id_card`, SUM(`sum_card`),'" + idShop + "','" + lastSyncPlusOneSecond + "' FROM `card_status`" +      // Выборка и вставка (групировка) всех данных с момента
-                " WHERE `date_operation` > (SELECT `last_total_sync` FROM `mag_status` WHERE `id` = '" + idShop + "')" +                                            // последней глобальной синхронизации по магазину .
-                " AND `mag_id` = '" + idShop + "' GROUP BY `id_card`;" +                                                                                            // с датой последней синхронизации + 1 секунда
-                " DELETE FROM `card_status` WHERE `mag_id` = '" + idShop + "' AND `date_operation` >  " +                                                           // Удаление дубликатов записей между 
-                " (SELECT `last_total_sync` FROM `mag_status` WHERE `id` = '" + idShop + "') " +                                                                    // last_total_sync и last_sync
-                " AND `date_operation` <= (SELECT `last_sync` FROM `mag_status` WHERE `id` = '" + idShop + "');" +                                                  // так как они сгрупированы в первом запросе
-                " UPDATE `mag_status` SET `last_sync` = '" + lastSyncPlusOneSecond + "' WHERE `id` = '" + idShop + "';" +                                           // Обновление даты последней синхронизации в mag_status
-                " INSERT INTO `card_status` SELECT `id_card`, SUM(`sum_card`),'" + idShop + "','" + lastSyncPlusTwoSecond +                                         // Выборка и вставка (групировка) данных 
-                "' FROM `card_status` WHERE `mag_id` = '" + idShop + "' GROUP BY `id_card`;" +                                                                      // last_total_sync + все остальное
-                " DELETE FROM `card_status` WHERE `mag_id` = '" + idShop + "' AND `date_operation` < '" + lastSyncPlusTwoSecond + "';" +                            // Удаление дубликатов после групировки по признаку < lastSyncPlusTwoSecond
-                " UPDATE `mag_status` SET `last_sync` = '" + lastSyncPlusTwoSecond + "' , `last_total_sync` = '" + lastSyncPlusTwoSecond +                          // Обновление даты последней синхронизации в mag_status
-                "' WHERE `id` = '" + idShop + "';";
-
-            Connector.CreateCommand(query);
-
-            lastSync = lastSyncPlusTwoSecond.Replace(" ", ",");
-            lastTotalSync = lastSyncPlusTwoSecond.Replace(" ", ","); ;
         }
 
         // Дамп данных с даты последней синхронизации по текущее время

@@ -1,4 +1,5 @@
-﻿using DiscountSharp.tools;
+﻿using DiscountSharp.dump;
+using DiscountSharp.tools;
 using MySql.Data.MySqlClient;
 using System;
 using System.Net;
@@ -34,7 +35,7 @@ namespace DiscountSharp.net
 
                     if (i == 1)
                     {
-                        Color.WriteLineColor("Shop [" + idShop + "] обновлен статус " + UkmServer.returnStatusText(status), ConsoleColor.Yellow);
+                        Color.WriteLineColor("Shop [" + idShop + "] обновлен статус " + Common.returnStatusText(status), ConsoleColor.Yellow);
                         return true;
                     }
                     else
@@ -71,7 +72,7 @@ namespace DiscountSharp.net
 
                     if (i == 1)
                     {
-                        Color.WriteLineColor("Shop [" + idShop + "] обновлен статус  " + UkmServer.returnStatusText(status) + " и last_sync = " + lastSync, ConsoleColor.Yellow);
+                        Color.WriteLineColor("Shop [" + idShop + "] обновлен статус  " + Common.returnStatusText(status) + " и last_sync = " + lastSync, ConsoleColor.Yellow);
                         return true;
                     }
                     else
@@ -109,7 +110,7 @@ namespace DiscountSharp.net
 
                     if (i == 1)
                     {
-                        Color.WriteLineColor("Shop [" + idShop + "] обновлен статус  " + UkmServer.returnStatusText(status) + " и last_Total_Sync = " + lastTotalSync, ConsoleColor.Yellow);
+                        Color.WriteLineColor("Shop [" + idShop + "] обновлен статус  " + Common.returnStatusText(status) + " и last_Total_Sync = " + lastTotalSync, ConsoleColor.Yellow);
                         return true;
                     }
                     else
@@ -145,16 +146,6 @@ namespace DiscountSharp.net
                 Color.WriteLineColor("[checkAvailability]" + exc.Message, ConsoleColor.Red);
                 Log.Write(exc.Message, "[checkAvailability]");
                 return false;
-            }
-        }
-
-        public static void CreateCommand(string queryString)
-        {
-            using (MySqlConnection conn = new MySqlConnection(DiscountStringConnecting))
-            {
-                MySqlCommand cmd = new MySqlCommand(queryString, conn);
-                cmd.Connection.Open();
-                cmd.ExecuteNonQuery();
             }
         }
     }
