@@ -18,8 +18,8 @@ namespace DiscountTest
         int frequencyDump;                          // Сутки
         int frequencyDailyDump;                     // Час
         int type;
-
         int status;
+
         [TestMethod]
         public void CreateObjectSetServer()
         {
@@ -28,7 +28,15 @@ namespace DiscountTest
             SetServer setServer = new SetServer(idShop, ipSetServer, portSetServer, dbName, lastTotalSync, lastSync, frequencyDump, frequencyDailyDump);
         }
 
+        [TestMethod]
+        public void DetermineTheShopStatusSet()
+        {
+            GetDbParameters();
 
+            SetServer setServer = new SetServer(idShop, ipSetServer, portSetServer, dbName, lastTotalSync, lastSync, frequencyDump, frequencyDailyDump);
+
+            setServer.determineTheShopStatus();
+        }
 
         public void GetDbParameters()
         {

@@ -80,6 +80,7 @@ namespace DiscountSharp.dump
                  discountDumpLastSync();
          }
 
+        // Метод глобального дампа данных за все время
         private int totalDiscountDump()
         {
             string dateTimeDump = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
@@ -155,8 +156,8 @@ namespace DiscountSharp.dump
         // метод передической групировки временных дампов и объединение с глобальными
         private void totalAndFrequencyDiscountDumpAndClean()
         {
-            string lastSyncPlusOneSecond = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd,HH:mm:ss");
-            string lastSyncPlusTwoSecond = DateTime.Parse(lastSync).AddSeconds(2).ToString("yyyy-MM-dd,HH:mm:ss");
+            string lastSyncPlusOneSecond = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss");
+            string lastSyncPlusTwoSecond = DateTime.Parse(lastSync).AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss");
 
             string query = "INSERT INTO `card_status` SELECT `id_card`, SUM(`sum_card`),'" + idShop + "','" + lastSyncPlusOneSecond + "' FROM `card_status`" +      // Выборка и вставка (групировка) всех данных с момента
                 " WHERE `date_operation` > (SELECT `last_total_sync` FROM `mag_status` WHERE `id` = '" + idShop + "')" +                                            // последней глобальной синхронизации по магазину .
@@ -173,8 +174,8 @@ namespace DiscountSharp.dump
 
             Connector.CreateCommand(query);
 
-            lastSync = lastSyncPlusTwoSecond;
-            lastTotalSync = lastSyncPlusTwoSecond;
+            lastSync = lastSyncPlusTwoSecond.Replace(" ", ",");
+            lastTotalSync = lastSyncPlusTwoSecond.Replace(" ", ","); ;
         }
 
         // Дамп данных с даты последней синхронизации по текущее время
@@ -187,11 +188,11 @@ namespace DiscountSharp.dump
             {
                 using (SqlConnection connSetServer = new SqlConnection(setServerStrConnecting))
                 {
-                    string queryString = @"USE SES;SELECT DiscountCards.BarCode AS CardNumber, (Cast(SUM(ChequePos.Price * ChequePos.Quant) AS Integer)) as summa
-                                           FROM ChequePos INNER JOIN ChequeDisc ON ChequePos.Id = ChequeDisc.PosId 
-                                           INNER JOIN ChequeHead ON ChequePos.ChequeId = ChequeHead.Id 
-                                           INNER JOIN DiscountCards ON ChequeDisc.DiscId = DiscountCards.Id 
-                                           WHERE ChequeHead.DateOperation Between '" + lastSync + "' and '" + dateTimeNow + "'GROUP BY DiscountCards.Perc, DiscountCards.BarCode";
+                    string queryString = @"USE SES;SELECT DiscountCards.BarCode AS CardNumber, (Cast(SUM(ChequePos.Price * ChequePos.Quant) AS Integer)) as summa" +
+                                           " FROM ChequePos INNER JOIN ChequeDisc ON ChequePos.Id = ChequeDisc.PosId " +
+                                           " INNER JOIN ChequeHead ON ChequePos.ChequeId = ChequeHead.Id " +
+                                           " INNER JOIN DiscountCards ON ChequeDisc.DiscId = DiscountCards.Id " +
+                                           " WHERE ChequeHead.DateOperation Between '" + lastSync.Replace(",", " ") + "' and '" + dateTimeNow.Replace(",", " ") + "' GROUP BY DiscountCards.Perc, DiscountCards.BarCode";
 
                     using (SqlCommand cmd = new SqlCommand(queryString, connSetServer))
                     {
