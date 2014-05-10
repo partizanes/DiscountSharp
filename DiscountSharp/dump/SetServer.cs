@@ -225,14 +225,14 @@ namespace DiscountSharp.dump
 
                                 if (queryCount > 0)
                                 {
-                                    Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных карт за период " + lastTotalSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Green);
+                                    Color.WriteLineColor("Shop [" + idShop + "] сделан дамп сумм дисконтных карт за период " + lastSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Green);
 
                                     Connector.updateStatus(1, idShop, dateTimeNow);
 
                                     lastSync = dateTimeNow;                                                 //Обновляя в базе ,объязательно обновляем и локальные переменные
                                     return 1;
                                 }
-                                else { Color.WriteLineColor("Shop [" + idShop + "] [WARNING] Дамп сумм дисконтных карт за период " + lastTotalSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Red); }
+                                else { Color.WriteLineColor("Shop [" + idShop + "] [WARNING] Дамп сумм дисконтных карт за период " + lastSync + " - " + dateTimeNow + "  .Количество записей: " + queryCount, ConsoleColor.Red); }
                             }
                         }
                     }

@@ -29,7 +29,7 @@ namespace DiscountTest
         }
 
         [TestMethod]
-        public void DetermineTheShopStatus()
+        public void DetermineTheShopStatusUkm()
         {
             GetDbParameters();
 
@@ -44,7 +44,7 @@ namespace DiscountTest
             {
                 conn.Open();
 
-                MySqlCommand cmd = new MySqlCommand(@"SELECT * FROM `mag_status` WHERE `id` = '41'", conn);
+                MySqlCommand cmd = new MySqlCommand(@"SELECT * FROM `mag_status` WHERE `id` = '40'", conn);
 
                 cmd.CommandTimeout = Connector.commandTimeout;
 
