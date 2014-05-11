@@ -43,7 +43,7 @@ namespace DiscountTest
             {
                 conn.Open();
 
-                MySqlCommand cmd = new MySqlCommand(@"SELECT * FROM `mag_status` WHERE `id` = '41'", conn);
+                MySqlCommand cmd = new MySqlCommand(@"SELECT * FROM `mag_status` WHERE `id` = '42'", conn);
 
                 cmd.CommandTimeout = Connector.commandTimeout;
 

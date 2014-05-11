@@ -45,7 +45,7 @@ namespace DiscountSharp.tools
 
         public void determineTheShopStatus()
         {
-            Color.WriteLineColor("Shop [" + idShop + "] Проверка доступности...", ConsoleColor.Yellow);
+            Color.WriteLineColor("Shop [" + idShop + "] проверка доступности...", ConsoleColor.Yellow);
 
             int tryCount = 0;
 
@@ -60,14 +60,14 @@ namespace DiscountSharp.tools
                 }
                 else
                 {
-                    Color.WriteLineColor("Shop [" + idShop + "] Подключиться не удалось.", ConsoleColor.Red);
-                    Log.Write("Shop [" + idShop + "] Подключиться не удалось.Отмена проверки.", "[checkAvailability]");
+                    Color.WriteLineColor("Shop [" + idShop + "] подключиться не удалось.", ConsoleColor.Red);
+                    Log.Write("Shop [" + idShop + "] подключиться не удалось.Отмена проверки.", "[checkAvailability]");
                     Connector.updateStatus(4, idShop);
                     return;
                 }
             }
 
-            Color.WriteLineColor("Shop [" + idShop + "] Проверка актуальности данных", ConsoleColor.Green);
+            Color.WriteLineColor("Shop [" + idShop + "] проверка актуальности данных", ConsoleColor.Green);
 
             checkAvailabilityDumpDC();
         }

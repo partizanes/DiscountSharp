@@ -11,6 +11,8 @@ namespace DiscountSharp.dump
         // метод передической групировки временных дампов и объединение с глобальными
         public static void totalAndFrequencyDiscountDumpAndClean(int idShop, string lastSyncPlusOneSecond, string lastSyncPlusTwoSecond)
         {
+            Color.WriteLineColor("Shop [" + idShop + "] начало процесса объединения дисконтных карт",ConsoleColor.Yellow);
+
             Connector.updateStatus(2, idShop);
 
             string query = "INSERT INTO `card_status` SELECT `id_card`, SUM(`sum_card`),'" + idShop + "','" + lastSyncPlusOneSecond + "' FROM `card_status`" +      // Выборка и вставка (групировка) всех данных с момента
@@ -27,9 +29,15 @@ namespace DiscountSharp.dump
                 "' WHERE `id` = '" + idShop + "';";
 
             if(CreateCommand(query))
+            {
                 Connector.updateStatus(1, idShop);
+                Color.WriteLineColor("Shop [" + idShop + "] запрос завершен.",ConsoleColor.Green);
+            }
             else
+            {
+                Color.WriteLineColor("Shop [" + idShop + "] произошла ошибка во время запроса.", ConsoleColor.Green);
                 Connector.updateStatus(3, idShop);
+            }
         }
 
         private static bool CreateCommand(string queryString)
