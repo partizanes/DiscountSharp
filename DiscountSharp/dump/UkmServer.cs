@@ -45,14 +45,14 @@ namespace DiscountSharp.tools
 
         public void determineTheShopStatus()
         {
-            Color.WriteLineColor(" Shop [" + idShop + "] Проверка доступности...", ConsoleColor.Yellow);
+            Color.WriteLineColor("Shop [" + idShop + "] Проверка доступности...", ConsoleColor.Yellow);
 
             int tryCount = 0;
 
             while (!Connector.checkAvailability(ipUkmServer))
             {
-                Color.WriteLineColor(" Shop [" + idShop + "] не доступен [" + tryCount + "] . Следующая попытка через 30 секунд.", ConsoleColor.Red);
-                Log.Write(" Shop [" + idShop + "] не доступен.", "[checkAvailability]");
+                Color.WriteLineColor("Shop [" + idShop + "] не доступен [" + tryCount + "] . Следующая попытка через 30 секунд.", ConsoleColor.Red);
+                Log.Write("Shop [" + idShop + "] не доступен.", "[checkAvailability]");
 
                 if (tryCount < 10){
                     tryCount++;
@@ -60,14 +60,14 @@ namespace DiscountSharp.tools
                 }
                 else
                 {
-                    Color.WriteLineColor(" Shop [" + idShop + "] Подключиться не удалось.", ConsoleColor.Red);
-                    Log.Write(" Shop [" + idShop + "] Подключиться не удалось.Отмена проверки.", "[checkAvailability]");
+                    Color.WriteLineColor("Shop [" + idShop + "] Подключиться не удалось.", ConsoleColor.Red);
+                    Log.Write("Shop [" + idShop + "] Подключиться не удалось.Отмена проверки.", "[checkAvailability]");
                     Connector.updateStatus(4, idShop);
                     return;
                 }
             }
 
-            Color.WriteLineColor(" Shop [" + idShop + "] Проверка актуальности данных", ConsoleColor.Green);
+            Color.WriteLineColor("Shop [" + idShop + "] Проверка актуальности данных", ConsoleColor.Green);
 
             checkAvailabilityDumpDC();
         }
@@ -77,13 +77,13 @@ namespace DiscountSharp.tools
         {
             if (lastTotalSync == "0001-01-01,00:00:00")
             {
-                Color.WriteLineColor(" Shop [" + idShop + "] необходим общий(весь период) дамп дисконтных карт.", ConsoleColor.Yellow);
+                Color.WriteLineColor("Shop [" + idShop + "] необходим общий(весь период) дамп дисконтных карт.", ConsoleColor.Yellow);
 
                 totalDiscountDump();
             }
             else if((DateTime.Now - DateTime.Parse(lastTotalSync)).TotalDays >= frequencyDump)
             {
-                Color.WriteLineColor(" Shop [" + idShop + "] необходимо объединение дампов дисконтных карт.", ConsoleColor.Yellow);
+                Color.WriteLineColor("Shop [" + idShop + "] необходимо объединение дампов дисконтных карт.", ConsoleColor.Yellow);
 
                 string lastSyncPlusOneSecond = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd,HH:mm:ss");
                 string lastSyncPlusTwoSecond = DateTime.Parse(lastSync).AddSeconds(2).ToString("yyyy-MM-dd,HH:mm:ss");
@@ -96,7 +96,7 @@ namespace DiscountSharp.tools
             }
             else if ((DateTime.Now - DateTime.Parse(lastSync)).TotalHours >= frequencyDailyDump)
             {
-                Color.WriteLineColor(" Shop [" + idShop + "] производиться временый дамп дисконтных карт.", ConsoleColor.Yellow);
+                Color.WriteLineColor("Shop [" + idShop + "] производиться временый дамп дисконтных карт.", ConsoleColor.Yellow);
 
                 discountDumpLastSync();
             }
@@ -136,6 +136,7 @@ namespace DiscountSharp.tools
                 {
                     Color.WriteLineColor("Shop [" + idShop + "] Произошло исключение во время запроса данных дисконтных карт .", ConsoleColor.Red);
                     Log.Write("[" + idShop + "] " + exc.Message,"queryException");
+                    return 0;
                 }
                 
                 using (MySqlConnection connDiscountSystem = new MySqlConnection(Connector.DiscountStringConnecting))

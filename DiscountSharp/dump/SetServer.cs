@@ -39,8 +39,8 @@ namespace DiscountSharp.dump
 
             while (!Connector.checkAvailability(ipSetServer))
             {
-                Color.WriteLineColor(" Shop [" + idShop + "] не доступен [" + tryCount + "] . Следующая попытка через 30 секунд.", ConsoleColor.Red);
-                Log.Write(" Shop [" + idShop + "] не доступен.", "[checkAvailability]");
+                Color.WriteLineColor("Shop [" + idShop + "] не доступен [" + tryCount + "] . Следующая попытка через 30 секунд.", ConsoleColor.Red);
+                Log.Write("Shop [" + idShop + "] не доступен.", "[checkAvailability]");
 
                 if (tryCount < 10)
                 {
@@ -49,8 +49,8 @@ namespace DiscountSharp.dump
                 }
                 else
                 {
-                    Color.WriteLineColor(" Shop [" + idShop + "] Подключиться не удалось.", ConsoleColor.Red);
-                    Log.Write(" Shop [" + idShop + "] Подключиться не удалось.Отмена проверки.", "[checkAvailability]");
+                    Color.WriteLineColor("Shop [" + idShop + "] Подключиться не удалось.", ConsoleColor.Red);
+                    Log.Write("Shop [" + idShop + "] Подключиться не удалось.Отмена проверки.", "[checkAvailability]");
                     Connector.updateStatus(4, idShop);
                     return;
                 }
@@ -65,7 +65,7 @@ namespace DiscountSharp.dump
          {
              if (lastTotalSync == "0001-01-01,00:00:00")
              {
-                 Color.WriteLineColor(" Shop " + idShop + " необходим дамп дисконтных карт.", ConsoleColor.Red);
+                 Color.WriteLineColor("Shop " + idShop + " необходим дамп дисконтных карт.", ConsoleColor.Red);
 
                  totalDiscountDump();
              }
