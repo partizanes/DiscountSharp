@@ -30,16 +30,18 @@ namespace DiscountSharp.dump
             this.frequencyDailyDump = frequencyDailyDump;
 
             Color.WriteLineColor("Инициализирован объект: Shop: [" + idShop + "] ip: " + ipSetServer + ":" + portSetServer + " база данных: " + dbName + " дата глобальной синхронизации: "
-                + lastTotalSync + " дата последней синхронизации: " + lastSync, ConsoleColor.Yellow);
+                + lastTotalSync + " дата последней синхронизации: " + lastSync, ConsoleColor.DarkYellow);
         }
 
         public void determineTheShopStatus()
         {
+            Color.WriteLineColor("Shop [" + idShop + "] проверка доступности...", ConsoleColor.Green);
+
             int tryCount = 0;
 
             while (!Connector.checkAvailability(ipSetServer))
             {
-                Color.WriteLineColor("Shop [" + idShop + "] не доступен [" + tryCount + "] . Следующая попытка через 30 секунд.", ConsoleColor.Red);
+                Color.WriteLineColor("Shop [" + idShop + "] не доступен [" + tryCount + "] . Следующая попытка через 30 секунд.", ConsoleColor.DarkYellow);
                 Log.Write("Shop [" + idShop + "] не доступен.", "[checkAvailability]");
 
                 if (tryCount < 10)
@@ -55,37 +57,47 @@ namespace DiscountSharp.dump
                     return;
                 }
             }
-
-            Connector.updateStatus(2, idShop);
+            Color.WriteLineColor("Shop [" + idShop + "] проверка актуальности данных...", ConsoleColor.Green);
 
             checkAvailabilityDumpDC();
         }
 
+        // Метод проверки актуальности данных
         private void checkAvailabilityDumpDC()
          {
-             if (lastTotalSync == "0001-01-01,00:00:00")
-             {
-                 Color.WriteLineColor("Shop " + idShop + " необходим дамп дисконтных карт.", ConsoleColor.Red);
+            if (lastTotalSync == "0001-01-01,00:00:00")
+            {
+                Color.WriteLineColor("Shop " + idShop + " необходим дамп дисконтных карт.", ConsoleColor.DarkBlue);
+                totalDiscountDump();
+            }
 
-                 totalDiscountDump();
-             }
-             else if ((DateTime.Now - DateTime.Parse(lastTotalSync)).TotalDays >= frequencyDump)
-             {
-                 string lastSyncPlusOneSecond = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss");
-                 string lastSyncPlusTwoSecond = DateTime.Parse(lastSync).AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss");
+            if ((DateTime.Now - DateTime.Parse(lastSync)).TotalHours >= frequencyDailyDump)
+            {
+                Color.WriteLineColor("Shop [" + idShop + "] производиться временый дамп дисконтных карт.", ConsoleColor.Green);
+                discountDumpLastSync();
+            }
 
-                 Common.totalAndFrequencyDiscountDumpAndClean(idShop, lastSyncPlusOneSecond, lastSyncPlusTwoSecond);
+            if ((DateTime.Now - DateTime.Parse(lastTotalSync)).TotalDays >= frequencyDump)
+            {
+                Color.WriteLineColor("Shop [" + idShop + "] необходимо объединение дампов дисконтных карт.", ConsoleColor.Green);
 
-                 lastSync = lastSyncPlusTwoSecond;
-                 lastTotalSync = lastSyncPlusTwoSecond;
-             }
-             else if ((DateTime.Now - DateTime.Parse(lastSync)).TotalHours >= frequencyDailyDump)
-                 discountDumpLastSync();
+                string lastSyncPlusOneSecond = DateTime.Parse(lastSync).AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss");
+                string lastSyncPlusTwoSecond = DateTime.Parse(lastSync).AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss");
+
+                Common.totalAndFrequencyDiscountDumpAndClean(idShop, lastSyncPlusOneSecond, lastSyncPlusTwoSecond);
+
+                lastSync = lastSyncPlusTwoSecond;
+                lastTotalSync = lastSyncPlusTwoSecond;
+            }
+
+            Color.WriteLineColor("[" + idShop + "] Завершено.", ConsoleColor.Magenta);
          }
 
         // Метод глобального дампа данных за все время
         private int totalDiscountDump()
         {
+            Connector.updateStatus(2, idShop);
+
             string dateTimeDump = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
             string setServerStrConnecting = string.Format("Server={0},{1};Database={2};User Id={3};Password={4};", ipSetServer, portSetServer, dbName, "partizanes", "***REMOVED***");
 
@@ -159,6 +171,8 @@ namespace DiscountSharp.dump
         // Дамп данных с даты последней синхронизации по текущее время
         private int discountDumpLastSync()
         {
+            Connector.updateStatus(2, idShop);
+
             string dateTimeNow = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
             string setServerStrConnecting = string.Format("Server={0},{1};Database={2};User Id={3};Password={4};", ipSetServer, portSetServer, dbName, "partizanes", "***REMOVED***");
 
@@ -226,20 +240,6 @@ namespace DiscountSharp.dump
             }
 
             return 0;
-        }
-
-        public static void CreateCommand(string queryString,string connectionString)
-        {
-            connectionString = "Server=192.168.12.100;Database=SES;User Id=partizanes;Password=***REMOVED***;";
-
-            using (SqlConnection connection = new SqlConnection(
-                       connectionString))
-            {
-                SqlCommand command = new SqlCommand(queryString, connection);
-                command.Connection.Open();
-                int i = command.ExecuteNonQuery();
-                Color.WriteLineColor(i.ToString(), ConsoleColor.Green);
-            }
         }
     }
 }

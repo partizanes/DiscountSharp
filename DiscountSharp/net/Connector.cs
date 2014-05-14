@@ -35,7 +35,7 @@ namespace DiscountSharp.net
 
                     if (i == 1)
                     {
-                        Color.WriteLineColor("Shop [" + idShop + "] обновлен статус " + Common.returnStatusText(status), ConsoleColor.Yellow);
+                        Color.WriteLineColor("Shop [" + idShop + "] обновлен статус - " + Common.returnStatusText(status), ConsoleColor.Yellow);
                         return true;
                     }
                     else

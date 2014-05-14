@@ -1,47 +1,82 @@
-﻿using DiscountSharp.net;
-using MySql.Data.MySqlClient;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
+using DiscountSharp.net;
+using MySql.Data.MySqlClient;
+using DiscountSharp.tools;
+using DiscountSharp.dump;
 
 namespace DiscountSharp.main
 {
     class ThreadManager
     {
-        public ThreadManager()
+        static List<Thread> threads = new List<Thread>();
+        static int idShop;
+        string ipServer;
+        int portServer;
+        string dbName;
+        string lastTotalSync;
+        string lastSync;
+        int frequencyDump;
+        int frequencyDailyDump;
+        int type;
+        int status;
+
+        public void CheckCircle()
         {
             using (MySqlConnection conn = new MySqlConnection(Connector.DiscountStringConnecting))
             {
-                conn.Open();
-
-                MySqlCommand cmd = new MySqlCommand(@"SELECT * FROM `mag_status`", conn);
-
-                cmd.CommandTimeout = 0;
-
-                using (MySqlDataReader dr = cmd.ExecuteReader())
+                try
                 {
-                    while (dr.Read())
+                    conn.Open();
+
+                    MySqlCommand cmd = new MySqlCommand("SELECT * FROM `mag_status` WHERE `status` > 0", conn);
+
+                    using (MySqlDataReader dr = cmd.ExecuteReader())
                     {
-                        int magId = dr.GetInt32(0);
-                        string ipAddress = dr.GetString(1);
-                        DateTime? timeTotalSync = dr.GetDateTime(2);
-                        DateTime? lastSync = dr.GetDateTime(3);
-                        int codeStatus = dr.GetInt32(4);
-                        int form = dr.GetInt32(5);
-                        string comment = dr.GetString(6);
+                        while(dr.Read())
+                        {
+                            Thread.Sleep(100);
 
+                            idShop = dr.GetInt32(0);
+                            ipServer = dr.GetString(1);
+                            portServer = dr.GetInt32(2);
+                            dbName = dr.GetString(3);
+                            lastTotalSync = dr.GetDateTime(4).ToString("yyyy-MM-dd,HH:mm:ss"); ;
+                            lastSync = dr.GetDateTime(5).ToString("yyyy-MM-dd,HH:mm:ss"); ;
+                            frequencyDump = dr.GetInt32(6);
+                            frequencyDailyDump = dr.GetInt32(7);
+                            type = dr.GetInt32(8);
+                            status = dr.GetInt32(9);
 
-                        try {
-                            Thread th = new Thread(delegate()
+                            Thread thd = new Thread(delegate()
                             {
-                       //         MagStatus magstatus = new MagStatus(magId, ipAddress, ipPort codeStatus, form, comment);
-                            }); ;
-                            th.Name = "CreateThread";
-                            th.Start();
-                        }
-                        catch (Exception exc) {
-                            Console.WriteLine(exc.Message);
+                                switch (type) //type
+                                {
+                                    case 1:
+                                        UkmServer ukmserver = new UkmServer(idShop, ipServer, portServer, dbName, lastTotalSync, lastSync, frequencyDump, frequencyDailyDump);
+                                        ukmserver.determineTheShopStatus();
+                                        break;
+                                    case 2:
+                                        SetServer setServer = new SetServer(idShop, ipServer, portServer, dbName, lastTotalSync, lastSync, frequencyDump, frequencyDailyDump);
+                                        setServer.determineTheShopStatus();
+                                        break;
+                                    case 3 :
+                                        //TODO
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            });
+                            thd.Name = "[" + idShop + "] Thread";
+                            thd.Start();
+                            threads.Add(thd);
                         }
                     }
+                }
+                catch(Exception exc)
+                {
+                    Color.WriteLineColor(exc.Message, ConsoleColor.Red);
                 }
             }
         }
