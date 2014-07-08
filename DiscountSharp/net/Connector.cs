@@ -136,10 +136,7 @@ namespace DiscountSharp.net
                 Ping Pinger = new Ping();
                 PingReply Reply = Pinger.Send(IPAddress.Parse(serverIp));
 
-                if (Reply.Status == IPStatus.Success)
-                    return true;
-                else
-                    return false;
+                return (Reply.Status == IPStatus.Success ? true : false);
             }
             catch(Exception exc)
             {
