@@ -1,33 +1,38 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 
 namespace DiscountSharp.tools
 {
     class Log
     {
+        private static string LogName = "DiscountSharp";
+        private static string FileName = "log/" + LogName + ".log";
+        private static readonly object syncRoot = new object();
+
         public static void Write(string str, string reason)
         {
-            string LogName = "DiscountSharp";
-            string EntryTime = DateTime.Now.ToLongTimeString();
-            string EntryDate = DateTime.Today.ToShortDateString();
-            string FileName = "log/" + LogName + ".log";
-
-            try
+            lock (syncRoot)
             {
-                if (!Directory.Exists(Environment.CurrentDirectory + "/log/"))
-                    Directory.CreateDirectory((Environment.CurrentDirectory + "/log/"));
+                string EntryTime = DateTime.Now.ToLongTimeString();
+                string EntryDate = DateTime.Today.ToShortDateString();
 
-                StreamWriter sw = new StreamWriter(FileName, true, System.Text.Encoding.UTF8);
-                sw.WriteLine("[" + EntryDate + "][" + EntryTime + "][" + reason + "]" + " " + str);
+                try
+                {
+                    if (!Directory.Exists(Environment.CurrentDirectory + "/log/"))
+                        Directory.CreateDirectory((Environment.CurrentDirectory + "/log/"));
 
-                sw.Close();
-                sw.Dispose();
-            }
-            catch (Exception exc)
-            {
-                Console.WriteLine(exc.StackTrace);
-                Console.WriteLine();
-                Console.WriteLine(exc.Message);
+                    StreamWriter sw = new StreamWriter(FileName, true, System.Text.Encoding.UTF8);
+                    sw.WriteLine("[" + EntryDate + "][" + EntryTime + "][" + reason + "]" + " " + str);
+
+                    sw.Close();
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.StackTrace);
+                    Console.WriteLine();
+                    Console.WriteLine(exc.Message);
+                }
             }
         }
     }

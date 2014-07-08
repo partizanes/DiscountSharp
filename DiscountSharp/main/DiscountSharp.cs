@@ -21,8 +21,6 @@ namespace DiscountSharp.main
 
                 Thread.Sleep(600000);
             }
-
-            Console.ReadKey();
         }
     }
 }

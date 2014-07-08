@@ -11,16 +11,6 @@ namespace DiscountSharp.main
     class ThreadManager
     {
         static List<Thread> threads = new List<Thread>();
-        static int idShop;
-        string ipServer;
-        int portServer;
-        string dbName;
-        string lastTotalSync;
-        string lastSync;
-        int frequencyDump;
-        int frequencyDailyDump;
-        int type;
-        int status;
 
         public void CheckCircle()
         {
@@ -38,16 +28,16 @@ namespace DiscountSharp.main
                         {
                             Thread.Sleep(100);
 
-                            idShop = dr.GetInt32(0);
-                            ipServer = dr.GetString(1);
-                            portServer = dr.GetInt32(2);
-                            dbName = dr.GetString(3);
-                            lastTotalSync = dr.GetDateTime(4).ToString("yyyy-MM-dd,HH:mm:ss"); ;
-                            lastSync = dr.GetDateTime(5).ToString("yyyy-MM-dd,HH:mm:ss"); ;
-                            frequencyDump = dr.GetInt32(6);
-                            frequencyDailyDump = dr.GetInt32(7);
-                            type = dr.GetInt32(8);
-                            status = dr.GetInt32(9);
+                            var idShop = dr.GetInt32(0);
+                            var ipServer = dr.GetString(1);
+                            var portServer = dr.GetInt32(2);
+                            var dbName = dr.GetString(3);
+                            var lastTotalSync = dr.GetDateTime(4).ToString("yyyy-MM-dd,HH:mm:ss");
+                            var lastSync = dr.GetDateTime(5).ToString("yyyy-MM-dd,HH:mm:ss");
+                            var frequencyDump = dr.GetInt32(6);
+                            var frequencyDailyDump = dr.GetInt32(7);
+                            var type = dr.GetInt32(8);
+                            var status = dr.GetInt32(9);
 
                             Thread thd = new Thread(delegate()
                             {

@@ -102,7 +102,7 @@ namespace DiscountSharp.tools
                 lastTotalSync = lastSyncPlusTwoSecond;
             }
 
-            Color.WriteLineColor("[" + idShop + "] Завершено.", ConsoleColor.Magenta);
+            Color.WriteLineColor("Shop [" + idShop + "] Завершено.", ConsoleColor.Magenta);
         }
 
         //Метод дампа суммы дисконтых карт за весь период до определенной даты

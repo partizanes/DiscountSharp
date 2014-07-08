@@ -90,7 +90,7 @@ namespace DiscountSharp.dump
                 lastTotalSync = lastSyncPlusTwoSecond;
             }
 
-            Color.WriteLineColor("[" + idShop + "] Завершено.", ConsoleColor.Magenta);
+            Color.WriteLineColor("Shop [" + idShop + "] Завершено.", ConsoleColor.Magenta);
          }
 
         // Метод глобального дампа данных за все время
