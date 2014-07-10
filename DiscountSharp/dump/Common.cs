@@ -78,5 +78,12 @@ namespace DiscountSharp.dump
             }
         }
 
+        public static void updateCardsToFivePercent()
+        {
+            Color.WriteLineColor("Обновление дисконтных карт до 5 процентов в основной базе...", ConsoleColor.Yellow);
+
+            CreateCommand(@"replace card_percent ( id_card,percent_card,update_date )SELECT id_card,5,NOW() FROM `card_status` GROUP BY `id_card` HAVING (SUM(`sum_card`) > 9999999);");
+        }
+
     }
 }

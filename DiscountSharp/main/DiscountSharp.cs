@@ -1,4 +1,5 @@
-﻿using DiscountSharp.tools;
+﻿using DiscountSharp.dump;
+using DiscountSharp.tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,10 @@ namespace DiscountSharp.main
             while(true)
             {
                 tm.CheckCircle();
+
+                Thread.Sleep(5000);
+
+                Common.updateCardsToFivePercent();
 
                 Thread.Sleep(600000);
             }
