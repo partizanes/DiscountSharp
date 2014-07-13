@@ -113,6 +113,8 @@ namespace DiscountSharp.dump
 
                     using (SqlCommand cmd = new SqlCommand(queryString, connSetServer))
                     {
+                        cmd.CommandTimeout = 0;
+
                         connSetServer.Open();
 
                         using (SqlDataReader dr = cmd.ExecuteReader())
