@@ -111,7 +111,7 @@ namespace DiscountSharp.tools
             Connector.updateStatus(2, idShop);
 
             string dateTimeDump = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
-            string ukmServerStrConnecting = string.Format("server={0};Port={1};uid={2};pwd={3};database={4};Connect Timeout=15;", ipUkmServer, portUkmServer, "partizanes", "***REMOVED***", dbName);
+            string ukmServerStrConnecting = string.Format("server={0};Port={1};uid={2};pwd={3};database={4};Connect Timeout=15;", ipUkmServer, portUkmServer, "", "", dbName);
             MySqlDataReader dr = null;
 
             using (MySqlConnection connUkmServer = new MySqlConnection(ukmServerStrConnecting))
@@ -196,7 +196,7 @@ namespace DiscountSharp.tools
             Connector.updateStatus(2, idShop);
 
             string dateTimeNow = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
-            string ukmServerStrConnecting = string.Format("server={0};Port={1};uid={2};pwd={3};database={4};Connect Timeout=15;", ipUkmServer, portUkmServer, "partizanes", "***REMOVED***", dbName);
+            string ukmServerStrConnecting = string.Format("server={0};Port={1};uid={2};pwd={3};database={4};Connect Timeout=15;", ipUkmServer, portUkmServer, "", "", dbName);
             MySqlDataReader dr = null;
 
             using (MySqlConnection connUkmServer = new MySqlConnection(ukmServerStrConnecting))
