@@ -99,7 +99,7 @@ namespace DiscountSharp.dump
             Connector.updateStatus(2, idShop);
 
             string dateTimeDump = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
-            string setServerStrConnecting = string.Format("Server={0},{1};Database={2};User Id={3};Password={4};", ipSetServer, portSetServer, dbName, "partizanes", "***REMOVED***");
+            string setServerStrConnecting = string.Format("Server={0},{1};Database={2};User Id={3};Password={4};", ipSetServer, portSetServer, dbName, "", "");
 
             try
             {
@@ -176,7 +176,7 @@ namespace DiscountSharp.dump
             Connector.updateStatus(2, idShop);
 
             string dateTimeNow = DateTime.Now.ToString("yyyy-MM-dd,HH:mm:ss");
-            string setServerStrConnecting = string.Format("Server={0},{1};Database={2};User Id={3};Password={4};", ipSetServer, portSetServer, dbName, "partizanes", "***REMOVED***");
+            string setServerStrConnecting = string.Format("Server={0},{1};Database={2};User Id={3};Password={4};", ipSetServer, portSetServer, dbName, "", "");
 
             try
             {
